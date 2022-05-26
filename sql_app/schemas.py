@@ -1,19 +1,36 @@
-from typing import Union
-
 from pydantic import BaseModel
 
 
 class UserBase(BaseModel):
-    user_id: int
-
-
-class UserCreate(UserBase):
     pass
 
 
+class UserCreate(UserBase):
+    interested_category: list[str]
+
+
 class User(UserBase):
-    id: int
-    owner_id: int
+    user_id: int
+    users_interested_category: list[str]
+
+    class Config:
+        orm_mode = True
+
+
+class VideoBase(BaseModel):
+    title: str
+    cover: str
+    url: str
+    length_str: str
+    category: str
+
+
+class VideoCreate(VideoBase):
+    pass
+
+
+class Video(VideoBase):
+    video_id: int
 
     class Config:
         orm_mode = True

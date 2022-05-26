@@ -1,6 +1,5 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
-
 from .database import Base
 
 
@@ -15,17 +14,19 @@ watch = Table(
 
 class User(Base):
     __tablename__ = "users"
-
     user_id = Column(Integer, primary_key=True, index=True)
+    videos_watched = relationship("Video", secondary=watch)
+    users_interested_category = relationship("interested_category")
 
-    videos_watched = relationship(
-        "Video", secondary=watch, backref="users_watched_this"
-    )
+
+class InterestedCategory(Base):
+    __tablename__ = "interested_category"
+    user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True)
+    interested_category = Column(String, primary_key=True)
 
 
 class Video(Base):
     __tablename__ = "videos"
-
     video_id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
     cover = Column(String)

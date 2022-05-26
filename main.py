@@ -14,7 +14,7 @@ async def check_existence(user_id: str):
 
 
 @app.put("/register/", status_code=status.HTTP_201_CREATED, tags=["user"])
-async def register(interests: set[str]):
+async def register(interested_category: set[str]):
     return 0
 
 
