@@ -1,21 +1,21 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from .database import Base
 
 
-watch = Table(
-    "watches",
-    Base.metadata,
-    Column("user_id", ForeignKey("users.user_id"), primary_key=True, index=True),
-    Column("video_id", ForeignKey("videos.video_id"), primary_key=True, index=True),
-    Column("liked", Boolean, default=False),
-)
+class Watch(Base):
+    __tablename__ = "watches"
+    user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True, index=True)
+    video_id = Column(
+        Integer, ForeignKey("videos.video_id"), primary_key=True, index=True
+    )
+    liked = Column(Boolean, default=False)
 
 
 class User(Base):
     __tablename__ = "users"
     user_id = Column(Integer, primary_key=True, index=True)
-    videos_watched = relationship("Video", secondary=watch)
+    videos_watched = relationship("Video", secondary=Watch)
     users_interested_category = relationship("interested_category")
 
 

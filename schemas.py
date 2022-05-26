@@ -6,12 +6,11 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    interested_category: list[str]
+    interested_category: set[str]
 
 
 class User(UserBase):
     user_id: int
-    users_interested_category: list[str]
 
     class Config:
         orm_mode = True
