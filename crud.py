@@ -54,3 +54,7 @@ def db_users_interested_category(db: Session, user_id: int):
 
 def db_get_all_watches(db: Session):
     return [(i.user_id, i.video_id, i.liked) for i in db.query(models.Watch).all()]
+
+
+def db_get_some_new_videos(db: Session, user_id: int, old_video_id: set[int]):
+    return  # https://stackoverflow.com/questions/60805/getting-random-row-through-sqlalchemy
