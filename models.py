@@ -1,19 +1,14 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from database import Base
 
 
-Watch = Table(
-    "watches",
-    Base.metadata,
-    Column(
-        "user_id", Integer, ForeignKey("users.user_id"), primary_key=True, index=True
-    ),
-    Column(
-        "video_id", Integer, ForeignKey("videos.video_id"), primary_key=True, index=True
-    ),
-    Column("liked", Boolean, default=False),
-)
+class Watch(Base):
+    __tablename__ = "watches"
+    user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True, index=True)
+    video_id = Column(
+        Integer, ForeignKey("videos.video_id"), primary_key=True, index=True
+    )
+    liked = Column(Boolean, default=False)
 
 
 class Video(Base):
@@ -35,5 +30,3 @@ class InterestedCategory(Base):
 class User(Base):
     __tablename__ = "users"
     user_id = Column(Integer, primary_key=True, index=True)
-    videos_watched = relationship(Video, secondary=Watch)
-    users_interested_category = relationship(InterestedCategory)

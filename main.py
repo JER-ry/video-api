@@ -1,7 +1,8 @@
-from cornac.models import BPR
 from cornac.data import Dataset
+from cornac.models import BPR
 from fastapi import BackgroundTasks, Depends, FastAPI, status
 from sqlalchemy.orm import Session
+
 import crud
 import models
 import schemas
@@ -27,9 +28,9 @@ def get_db():
         db.close()
 
 
-def train_model():
-    data = Dataset.build(crud.db_get_all_watches(Depends(get_db)))
-    bpr.fit(data)
+@app.post("/train_model/", tags=["dev"])
+def train_model(db: Session = Depends(get_db)):
+    bpr.fit(Dataset.build(crud.db_get_all_watches(db)))
 
 
 # train_model()
@@ -47,7 +48,6 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @app.put(
     "/watch/{user_id}/{video_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     tags=["player"],
 )
 def watch(
@@ -57,12 +57,11 @@ def watch(
     db: Session = Depends(get_db),
 ):
     crud.db_watch(db, user_id, video_id)
-    background_tasks.add_task(train_model)
+    background_tasks.add_task(train_model, db)
 
 
 @app.put(
     "/like/{user_id}/{video_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     tags=["player"],
 )
 def like(
@@ -72,12 +71,11 @@ def like(
     db: Session = Depends(get_db),
 ):
     crud.db_like(db, user_id, video_id)
-    background_tasks.add_task(train_model)
+    background_tasks.add_task(train_model, db)
 
 
 @app.put(
     "/unlike/{user_id}/{video_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     tags=["player"],
 )
 def unlike(
@@ -87,7 +85,7 @@ def unlike(
     db: Session = Depends(get_db),
 ):
     crud.db_unlike(db, user_id, video_id)
-    background_tasks.add_task(train_model)
+    background_tasks.add_task(train_model, db)
 
 
 @app.get("/recommend_more/{user_id}", tags=["video_list"])
@@ -107,7 +105,7 @@ def recommend_more(
     else:
         videos = crud.db_get_some_new_videos(db, user_id, old_video_id)[
             :final_number_of_videos
-        ]
+        ]  # TODO: consider user's interested categories
     return {
         "videos": videos,
         "recommended": user_watched_any,
@@ -122,3 +120,8 @@ def check_video_existence(video_id: int, db: Session = Depends(get_db)):
 @app.post("/add_video/", status_code=status.HTTP_201_CREATED, tags=["videos"])
 def add_video(video: schemas.VideoCreate, db: Session = Depends(get_db)):
     return crud.db_add_video(db, video)
+
+
+@app.get("/test/", tags=["dev"])
+def test(db: Session = Depends(get_db)):
+    pass
