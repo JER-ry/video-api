@@ -1,28 +1,19 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
-from .database import Base
+from database import Base
 
 
-class Watch(Base):
-    __tablename__ = "watches"
-    user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True, index=True)
-    video_id = Column(
-        Integer, ForeignKey("videos.video_id"), primary_key=True, index=True
-    )
-    liked = Column(Boolean, default=False)
-
-
-class User(Base):
-    __tablename__ = "users"
-    user_id = Column(Integer, primary_key=True, index=True)
-    videos_watched = relationship("Video", secondary=Watch)
-    users_interested_category = relationship("interested_category")
-
-
-class InterestedCategory(Base):
-    __tablename__ = "interested_category"
-    user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True)
-    interested_category = Column(String, primary_key=True)
+Watch = Table(
+    "watches",
+    Base.metadata,
+    Column(
+        "user_id", Integer, ForeignKey("users.user_id"), primary_key=True, index=True
+    ),
+    Column(
+        "video_id", Integer, ForeignKey("videos.video_id"), primary_key=True, index=True
+    ),
+    Column("liked", Boolean, default=False),
+)
 
 
 class Video(Base):
@@ -33,3 +24,16 @@ class Video(Base):
     url = Column(String)
     length_str = Column(String)
     category = Column(String, index=True)
+
+
+class InterestedCategory(Base):
+    __tablename__ = "interested_category"
+    user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True)
+    interested_category = Column(String, primary_key=True)
+
+
+class User(Base):
+    __tablename__ = "users"
+    user_id = Column(Integer, primary_key=True, index=True)
+    videos_watched = relationship(Video, secondary=Watch)
+    users_interested_category = relationship(InterestedCategory)

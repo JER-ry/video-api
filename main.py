@@ -16,7 +16,6 @@ bpr = BPR(
     max_iter=100,
     learning_rate=0.001,
     lambda_reg=0.001,
-    use_bias=True,
 )
 
 
@@ -33,13 +32,16 @@ def train_model():
     bpr.fit(data)
 
 
-@app.get("/check_existence/{user_id}", tags=["user"])
-async def check_existence(user_id: str, db: Session = Depends(get_db)):
-    return crud.db_check_existence(db, user_id)
+# train_model()
 
 
-@app.put("/register/", status_code=status.HTTP_201_CREATED, tags=["user"])
-async def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+@app.get("/check_user_existence/{user_id}", tags=["user"])
+def check_user_existence(user_id: str, db: Session = Depends(get_db)):
+    return crud.db_check_user_existence(db, user_id)
+
+
+@app.post("/register/", status_code=status.HTTP_201_CREATED, tags=["user"])
+def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.db_register(db, user)
 
 
@@ -48,7 +50,7 @@ async def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     status_code=status.HTTP_204_NO_CONTENT,
     tags=["player"],
 )
-async def watch(
+def watch(
     user_id: int,
     video_id: int,
     background_tasks: BackgroundTasks,
@@ -63,7 +65,7 @@ async def watch(
     status_code=status.HTTP_204_NO_CONTENT,
     tags=["player"],
 )
-async def like(
+def like(
     user_id: int,
     video_id: int,
     background_tasks: BackgroundTasks,
@@ -78,7 +80,7 @@ async def like(
     status_code=status.HTTP_204_NO_CONTENT,
     tags=["player"],
 )
-async def unlike(
+def unlike(
     user_id: int,
     video_id: int,
     background_tasks: BackgroundTasks,
@@ -89,11 +91,34 @@ async def unlike(
 
 
 @app.get("/recommend_more/{user_id}", tags=["video_list"])
-async def recommend_more(
-    user_id: int, old_video_id: set[int], db: Session = Depends(get_db)
+def recommend_more(
+    user_id: int,
+    old_video_id: set[int],
+    final_number_of_videos=6,
+    db: Session = Depends(get_db),
 ):
-    recommended_video_id = sorted(
-        crud.db_get_some_new_videos(db, user_id, old_video_id),
-        key=lambda video_id: bpr.score(user_id, video_id),
-    )
-    return 0
+    user_watched_any = crud.db_user_watched_any(db, user_id)
+    if user_watched_any:
+        videos = sorted(
+            crud.db_get_some_new_videos(db, user_id, old_video_id),
+            key=lambda video_id: bpr.score(user_id, video_id),
+            reverse=True,
+        )[:final_number_of_videos]
+    else:
+        videos = crud.db_get_some_new_videos(db, user_id, old_video_id)[
+            :final_number_of_videos
+        ]
+    return {
+        "videos": videos,
+        "recommended": user_watched_any,
+    }
+
+
+@app.get("/check_video_existence/{video_id}", tags=["videos"])
+def check_video_existence(video_id: int, db: Session = Depends(get_db)):
+    return crud.db_check_video_existence(db, video_id)
+
+
+@app.post("/add_video/", status_code=status.HTTP_201_CREATED, tags=["videos"])
+def add_video(video: schemas.VideoCreate, db: Session = Depends(get_db)):
+    return crud.db_add_video(db, video)
