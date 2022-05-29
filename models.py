@@ -1,5 +1,13 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 from database import Base
+
+
+def to_dict(self):
+    return {i.name: getattr(self, i.name, None) for i in self.__table__.columns}
+
+
+Base.to_dict = to_dict
 
 
 class Watch(Base):
@@ -30,3 +38,5 @@ class InterestedCategory(Base):
 class User(Base):
     __tablename__ = "users"
     user_id = Column(Integer, primary_key=True, index=True)
+    videos_watched = relationship(Video, secondary="watches")
+    users_interested_category = relationship(InterestedCategory)

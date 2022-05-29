@@ -12,12 +12,8 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-bpr = BPR(
-    k=10,
-    max_iter=100,
-    learning_rate=0.001,
-    lambda_reg=0.001,
-)
+bpr = BPR()
+dataset = None
 
 
 def get_db():
@@ -28,12 +24,13 @@ def get_db():
         db.close()
 
 
-@app.post("/train_model/", tags=["dev"])
 def train_model(db: Session = Depends(get_db)):
-    bpr.fit(Dataset.build(crud.db_get_all_watches(db)))
-
-
-# train_model()
+    global dataset  # pylint: disable=global-statement
+    dataset = Dataset.build(crud.db_get_all_watches(db))
+    try:
+        bpr.fit(dataset)
+    except:  # pylint: disable=bare-except
+        pass
 
 
 @app.get("/check_user_existence/{user_id}", tags=["user"])
@@ -89,27 +86,33 @@ def unlike(
 
 
 @app.get("/recommend_more/{user_id}", tags=["video_list"])
-def recommend_more(
+def recommend_more(  # pylint: disable=dangerous-default-value
     user_id: int,
-    old_video_id: set[int],
-    final_number_of_videos=6,
+    old_video_id: list[int] = [],
     db: Session = Depends(get_db),
 ):
-    user_watched_any = crud.db_user_watched_any(db, user_id)
-    if user_watched_any:
-        videos = sorted(
-            crud.db_get_some_new_videos(db, user_id, old_video_id),
-            key=lambda video_id: bpr.score(user_id, video_id),
-            reverse=True,
-        )[:final_number_of_videos]
-    else:
-        videos = crud.db_get_some_new_videos(db, user_id, old_video_id)[
-            :final_number_of_videos
-        ]  # TODO: consider user's interested categories
-    return {
-        "videos": videos,
-        "recommended": user_watched_any,
-    }
+    final_number_of_videos = 6
+    final_video_id = []
+    recommended_list = []
+    new_video_id = crud.db_get_some_new_video_id(db, user_id, old_video_id)
+    if crud.db_user_watched_any(db, user_id):
+        try:
+            final_video_id += sorted(
+                filter(lambda i: crud.db_whether_video_watched(db, i), new_video_id),
+                key=lambda i: bpr.score(dataset.uid_map[user_id], dataset.iid_map[i]),
+                reverse=True,
+            )[:final_number_of_videos]
+            recommended_list += [True] * len(final_video_id)
+        except:  # pylint: disable=bare-except
+            pass
+    if len(final_video_id) < final_number_of_videos:
+        final_video_id += list(filter(lambda i: i not in final_video_id, new_video_id))[
+            : final_number_of_videos - len(final_video_id)
+        ]
+        recommended_list += [False] * (final_number_of_videos - len(final_video_id))
+    return [
+        crud.db_get_video(db, i, j) for i, j in zip(final_video_id, recommended_list)
+    ]
 
 
 @app.get("/check_video_existence/{video_id}", tags=["videos"])
@@ -122,6 +125,49 @@ def add_video(video: schemas.VideoCreate, db: Session = Depends(get_db)):
     return crud.db_add_video(db, video)
 
 
-@app.get("/test/", tags=["dev"])
+@app.get("/test/", tags=["dev"], deprecated=True)
 def test(db: Session = Depends(get_db)):
-    pass
+    user1 = schemas.UserCreate(interested_category=["yuri", "new year", "happy"])
+    user2 = schemas.UserCreate(interested_category=["nature", "tv series", "daily"])
+    user3 = schemas.UserCreate(interested_category=["yuri", "tv series", "happy"])
+    user_id1 = crud.db_register(db, user1)
+    user_id2 = crud.db_register(db, user2)
+    user_id3 = crud.db_register(db, user3)
+    video1 = schemas.VideoCreate(
+        title="yurucamp movie",
+        cover="test2.jpg",
+        url="example.com",
+        length_str="1:23",
+        category="yuri",
+    )
+    video2 = schemas.VideoCreate(
+        title="happy new year",
+        cover="test.jpg",
+        url="example.com",
+        length_str="122:23",
+        category="new year",
+    )
+    video3 = schemas.VideoCreate(
+        title="mountain, lake",
+        cover="test7.jpg",
+        url="example.com",
+        length_str="0:12",
+        category="nature",
+    )
+    video_id1 = crud.db_add_video(db, video1)
+    video_id2 = crud.db_add_video(db, video2)
+    video_id3 = crud.db_add_video(db, video3)
+    crud.db_watch(db, user_id1, video_id1)
+    crud.db_watch(db, user_id1, video_id3)
+    crud.db_watch(db, user_id2, video_id2)
+    crud.db_watch(db, user_id2, video_id3)
+    crud.db_watch(db, user_id3, video_id1)
+    crud.db_like(db, user_id1, video_id1)
+    crud.db_like(db, user_id3, video_id1)
+    crud.db_like(db, user_id2, video_id2)
+    crud.db_unlike(db, user_id2, video_id2)
+    return {
+        "ids": [user_id1, user_id2, user_id3, video_id1, video_id2, video_id3],
+        "test1": crud.db_get_some_new_video_id(db, user_id1, []),
+        "test2": recommend_more(user_id1, [], db),
+    }
