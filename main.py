@@ -1,7 +1,9 @@
 from cornac.data import Dataset
 from cornac.models import BPR
 from fastapi import BackgroundTasks, Depends, FastAPI, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+
 
 import crud
 import models
@@ -11,6 +13,18 @@ from database import SessionLocal, engine
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+origins = [
+    "*",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    # allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 bpr = BPR()
 dataset = None
@@ -127,30 +141,30 @@ def add_video(video: schemas.VideoCreate, db: Session = Depends(get_db)):
 
 @app.get("/test/", tags=["dev"], deprecated=True)
 def test(db: Session = Depends(get_db)):
-    user1 = schemas.UserCreate(interested_category=["yuri", "new year", "happy"])
-    user2 = schemas.UserCreate(interested_category=["nature", "tv series", "daily"])
-    user3 = schemas.UserCreate(interested_category=["yuri", "tv series", "happy"])
+    user1 = schemas.UserCreate(interested_categories=["yuri", "new year", "happy"])
+    user2 = schemas.UserCreate(interested_categories=["nature", "tv series", "daily"])
+    user3 = schemas.UserCreate(interested_categories=["yuri", "tv series", "happy"])
     user_id1 = crud.db_register(db, user1)
     user_id2 = crud.db_register(db, user2)
     user_id3 = crud.db_register(db, user3)
     video1 = schemas.VideoCreate(
         title="yurucamp movie",
-        cover="test2.jpg",
-        url="example.com",
+        cover="./img/test2.jpg",
+        url="https://streamable.com/75b8hw",
         length_str="1:23",
         category="yuri",
     )
     video2 = schemas.VideoCreate(
         title="happy new year",
-        cover="test.jpg",
-        url="example.com",
+        cover="./img/test.jpg",
+        url="https://streamable.com/idhvqx",
         length_str="122:23",
         category="new year",
     )
     video3 = schemas.VideoCreate(
         title="mountain, lake",
-        cover="test7.jpg",
-        url="example.com",
+        cover="./img/test7.jpg",
+        url="https://streamable.com/81uqs3",
         length_str="0:12",
         category="nature",
     )

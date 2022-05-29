@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class UserCreate(BaseModel):
-    interested_category: list[str]
+    interested_categories: list[str]
 
 
 class VideoCreate(BaseModel):

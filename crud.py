@@ -21,8 +21,10 @@ def db_register(db: Session, user: schemas.UserCreate):
         user_id_gen = int(uuid.uuid4()) % 10000000
     user_gen = models.User(user_id=user_id_gen)
     db.add(user_gen)
-    for item in user.interested_category:
-        db.add(models.InterestedCategory(user_id=user_id_gen, interested_category=item))
+    for item in user.interested_categories:
+        db.add(
+            models.InterestedCategories(user_id=user_id_gen, interested_categories=item)
+        )
     db.commit()
     return user_id_gen
 
@@ -60,11 +62,11 @@ def db_user_watched_any(db: Session, user_id: int):
     return db.query(models.Watch).filter(models.Watch.user_id == user_id).count() > 0
 
 
-def db_users_interested_category(db: Session, user_id: int):
+def db_users_interested_categories(db: Session, user_id: int):
     return [
-        i["interested_category"]
-        for i in db.query(models.InterestedCategory.interested_category)
-        .filter(models.InterestedCategory.user_id == user_id)
+        i["interested_categories"]
+        for i in db.query(models.InterestedCategories.interested_categories)
+        .filter(models.InterestedCategories.user_id == user_id)
         .all()
     ]
 

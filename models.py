@@ -29,14 +29,14 @@ class Video(Base):
     category = Column(String, index=True)
 
 
-class InterestedCategory(Base):
-    __tablename__ = "interested_category"
+class InterestedCategories(Base):
+    __tablename__ = "interested_categories"
     user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True)
-    interested_category = Column(String, primary_key=True)
+    interested_categories = Column(String, primary_key=True)
 
 
 class User(Base):
     __tablename__ = "users"
     user_id = Column(Integer, primary_key=True, index=True)
     videos_watched = relationship(Video, secondary="watches")
-    users_interested_category = relationship(InterestedCategory)
+    users_interested_categories = relationship(InterestedCategories)
