@@ -111,19 +111,34 @@ def recommend_more(  # pylint: disable=dangerous-default-value
     new_video_id = crud.db_get_some_new_video_id(db, user_id, old_video_id)
     if crud.db_user_watched_any(db, user_id):
         try:
-            final_video_id += sorted(
-                filter(lambda i: crud.db_whether_video_watched(db, i), new_video_id),
+            video_list_1 = sorted(
+                filter(
+                    lambda i: crud.db_check_video_watched_by_anyone(db, i), new_video_id
+                ),
                 key=lambda i: bpr.score(dataset.uid_map[user_id], dataset.iid_map[i]),
                 reverse=True,
             )[:final_number_of_videos]
-            recommended_list += [True] * len(final_video_id)
+            final_video_id += video_list_1
+            recommended_list += [True] * len(video_list_1)
         except:  # pylint: disable=bare-except
             pass
     if len(final_video_id) < final_number_of_videos:
-        final_video_id += list(filter(lambda i: i not in final_video_id, new_video_id))[
+        users_interested_categories = crud.db_users_interested_categories(db, user_id)
+        video_list_2 = list(
+            filter(
+                lambda i: (i not in final_video_id)
+                and (crud.db_get_video_category(db, i) in users_interested_categories),
+                new_video_id,
+            )
+        )[: final_number_of_videos - len(final_video_id)]
+        final_video_id += video_list_2
+        recommended_list += [False] * len(video_list_2)
+    if len(final_video_id) < final_number_of_videos:
+        video_list_3 = list(filter(lambda i: i not in final_video_id, new_video_id))[
             : final_number_of_videos - len(final_video_id)
         ]
-        recommended_list += [False] * (final_number_of_videos - len(final_video_id))
+        final_video_id += video_list_3
+        recommended_list += [False] * len(video_list_3)
     return [
         crud.db_get_video(db, i, j) for i, j in zip(final_video_id, recommended_list)
     ]
@@ -149,21 +164,21 @@ def test(db: Session = Depends(get_db)):
     user_id3 = crud.db_register(db, user3)
     video1 = schemas.VideoCreate(
         title="yurucamp movie",
-        cover="./img/test2.jpg",
+        cover="https://i.vgy.me/PfcUgS.jpg",
         url="https://streamable.com/75b8hw",
         length_str="1:23",
         category="yuri",
     )
     video2 = schemas.VideoCreate(
         title="happy new year",
-        cover="./img/test.jpg",
+        cover="https://i.vgy.me/zMJC1E.jpg",
         url="https://streamable.com/idhvqx",
         length_str="122:23",
         category="new year",
     )
     video3 = schemas.VideoCreate(
         title="mountain, lake",
-        cover="./img/test7.jpg",
+        cover="https://i.vgy.me/nXsQUr.jpg",
         url="https://streamable.com/81uqs3",
         length_str="0:12",
         category="nature",

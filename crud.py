@@ -71,7 +71,7 @@ def db_users_interested_categories(db: Session, user_id: int):
     ]
 
 
-def db_whether_video_watched(db: Session, video_id: int):
+def db_check_video_watched_by_anyone(db: Session, video_id: int):
     return db.query(models.Watch).filter(models.Watch.video_id == video_id).count() > 0
 
 
@@ -107,6 +107,14 @@ def db_get_video(db: Session, video_id: int, recommended: bool):
     )
     video["recommended"] = recommended
     return video
+
+
+def db_get_video_category(db: Session, video_id: int):
+    return (
+        db.query(models.Video.category)
+        .filter(models.Video.video_id == video_id)
+        .first()["category"]
+    )
 
 
 def db_add_video(db: Session, video: schemas.VideoCreate):
