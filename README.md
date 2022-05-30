@@ -21,6 +21,8 @@ uvicorn main:app --reload
 
 Now open http://127.0.0.1:8000/docs in your browser.
 
+> I prepared some test data. You can use them by send a GET request to http://127.0.0.1:8000/test/ (and see the response for generated ids — three user ids and three video ids). You can do this through http://127.0.0.1:8000/docs or by `curl`.
+
 ## How to add a video
 
 Send a POST request to http://127.0.0.1:8000/add_video/ with the body
