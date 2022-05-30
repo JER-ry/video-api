@@ -41,6 +41,7 @@ You can write a script to do these automatically.
 
 ## Current implementation did not consider…
 
+- **CORS was not handled correctly.** That doesn’t matter if you run both `video-api` and `video-site` locally though.
 - Security. No authentication. No password.
 - Possible needs to delete users or videos. You’ll need to do that manually.
 - Performance. No `async` appeared. Used `sqlite`.
