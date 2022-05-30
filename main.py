@@ -99,7 +99,7 @@ def unlike(
     background_tasks.add_task(train_model, db)
 
 
-@app.get("/recommend_more/{user_id}", tags=["video_list"])
+@app.put("/recommend_more/{user_id}", tags=["video_list"])
 def recommend_more(  # pylint: disable=dangerous-default-value
     user_id: int,
     old_video_id: list[int] = [],
