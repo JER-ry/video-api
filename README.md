@@ -47,15 +47,16 @@ Send a POST request to http://127.0.0.1:8000/add_video/ with the body
   "title": "yurucamp movie",
   "cover": "https://i.vgy.me/PfcUgS.jpg",
   "url": "https://streamable.com/75b8hw",
-  "length_str": "1:23", // Please calculate that manually
+  "length_str": "1:23",
   "category": "yuri"
 }
 ```
 
-> Notes: 
+> Notes:
 >
-> 1. Upload the cover to a image hosting site (like [vgy.me](https://vgy.me/)),  to get the URL.
+> 1. Upload the cover to a image hosting site (like [vgy.me](https://vgy.me/)), to get the URL.
 > 2. Upload the video to a video hosting site (like [Streamable](https://streamable.com/)) to get the URL.
+> 3. Please calculate viedo length manually.
 
 You can write a script to do these automatically.
 
